@@ -1,0 +1,31 @@
+def build_simple_insert_query(database, table, values_df):
+    """
+    Generates an HQL Insert statement based on the inputs to be run through Impala
+    :param database: the Hive database corresponding to the table
+    :param table: the Hive table into which we plan to insert the values
+    :param values_df: a dataframe of values to insert into the table
+    :return: an HQL Insert statement string
+    """
+    database = database.lower()
+    table = table.lower()
+    insert_clause = 'INSERT INTO TABLE {0}.{1}'.format(database, table)
+    values_list = values_df.values
+
+    values_string = ''
+    for row in values_list:
+        values_string += '('
+        for column in row:
+            value_type = type(column)
+            if value_type is str:
+                values_string += '\'{0}\''.format(column)
+            if column is None:
+                values_string += ' '
+            elif value_type is int or value_type is float:
+                values_string += '{0}'.format(column)
+            values_string += ','
+        values_string = values_string[:-1]
+        values_string += '),'
+    values_string = values_string[:-1]
+    values_clause = 'VALUES({0})'.format(values_string)
+    query = '{0} {1};'.format(insert_clause, values_clause)
+    return query
